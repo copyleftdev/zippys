@@ -1,0 +1,102 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: 1.22
+
+    - name: Install dependencies
+      run: make deps
+
+    - name: Run tests
+      run: make test
+
+    - name: Create distribution package
+      run: make dist
+
+    - name: Get tag name
+      id: tag
+      run: echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.tag.outputs.TAG_NAME }}
+        release_name: Zippys ${{ steps.tag.outputs.TAG_NAME }}
+        body: |
+          ## Zippys Security Tool Release ${{ steps.tag.outputs.TAG_NAME }}
+          
+          Advanced Zip Slip vulnerability detection and exploitation tool.
+          
+          ### Features
+          - Advanced algorithmic path traversal detection
+          - Comprehensive fuzz testing validation
+          - Professional CLI interface
+          - Cross-platform support
+          
+          ### Downloads
+          - **Linux**: `zippys-${{ steps.tag.outputs.TAG_NAME }}-linux-amd64`
+          - **Windows**: `zippys-${{ steps.tag.outputs.TAG_NAME }}-windows-amd64.exe`
+          - **macOS**: `zippys-${{ steps.tag.outputs.TAG_NAME }}-darwin-amd64`
+          
+          ### Security Notice
+          This tool is for authorized security testing and research purposes only.
+          
+          See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
+        draft: false
+        prerelease: false
+
+    - name: Upload Linux Binary
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./dist/zippys-${{ steps.tag.outputs.TAG_NAME }}-linux-amd64
+        asset_name: zippys-${{ steps.tag.outputs.TAG_NAME }}-linux-amd64
+        asset_content_type: application/octet-stream
+
+    - name: Upload Windows Binary
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./dist/zippys-${{ steps.tag.outputs.TAG_NAME }}-windows-amd64.exe
+        asset_name: zippys-${{ steps.tag.outputs.TAG_NAME }}-windows-amd64.exe
+        asset_content_type: application/octet-stream
+
+    - name: Upload macOS Binary
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./dist/zippys-${{ steps.tag.outputs.TAG_NAME }}-darwin-amd64
+        asset_name: zippys-${{ steps.tag.outputs.TAG_NAME }}-darwin-amd64
+        asset_content_type: application/octet-stream
+
+    - name: Upload Distribution Package
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./dist/zippys-${{ steps.tag.outputs.TAG_NAME }}.tar.gz
+        asset_name: zippys-${{ steps.tag.outputs.TAG_NAME }}.tar.gz
+        asset_content_type: application/gzip
