@@ -129,13 +129,13 @@ func (pva *PathVulnerabilityAnalyzer) detectParentDirectoryTraversal() bool {
 	if pva.tokens == nil || pva.length < 2 || len(pva.tokens) < 2 {
 		return false
 	}
-	
+
 	// Use the minimum of pva.length and actual slice length for safety
 	maxIndex := pva.length
 	if len(pva.tokens) < maxIndex {
 		maxIndex = len(pva.tokens)
 	}
-	
+
 	for i := 0; i < maxIndex-1; i++ {
 		// Double-check bounds before array access
 		if i+1 < len(pva.tokens) && pva.tokens[i] == '.' && pva.tokens[i+1] == '.' {
