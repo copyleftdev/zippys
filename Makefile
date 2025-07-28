@@ -137,8 +137,9 @@ dist: clean build-all
 	cp $(BINARY_DARWIN) dist/$(BINARY_NAME)-$(VERSION)-darwin-amd64
 	cp README.md dist/
 	cp -r media dist/
-	cp -r testdata dist/
-	tar -czf dist/$(BINARY_NAME)-$(VERSION).tar.gz -C dist .
+	# Copy testdata if it exists (optional for distribution)
+	@if [ -d "testdata" ]; then cp -r testdata dist/; else echo "$(YELLOW)⚠️  testdata directory not found, skipping...$(NC)"; fi
+	cd dist && tar -czf $(BINARY_NAME)-$(VERSION).tar.gz --exclude='*.tar.gz' * && cd ..
 	@echo "$(GREEN)✅ Distribution package created: dist/$(BINARY_NAME)-$(VERSION).tar.gz$(NC)"
 
 # Development workflow
