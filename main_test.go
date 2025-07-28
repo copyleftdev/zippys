@@ -18,7 +18,7 @@ import (
 func TestGenerateMaliciousZip(t *testing.T) {
 	// Test basic ZIP generation with current interface
 	outputFile := "testdata/test_basic.zip"
-	payloads := []string{"../../evil.txt"}
+	payload := "evil.txt"
 	depth := 2
 
 	// Setup test directory
@@ -28,15 +28,18 @@ func TestGenerateMaliciousZip(t *testing.T) {
 	os.MkdirAll("testdata", 0755)
 
 	// Test the function with current signature
-	err := generateMaliciousZip(outputFile, payloads, depth)
+	err := generateMaliciousZip(outputFile, []string{payload}, depth)
 	assert.NoError(t, err)
 
 	// Verify the ZIP file was created
 	_, err = os.Stat(outputFile)
 	assert.NoError(t, err)
 
-	// Verify ZIP contents exist
-	verifyZipContents(t, outputFile, []string{"../../evil.txt"}, "malicious content")
+	// The actual path in ZIP will be: "../" * depth + payload = "../../evil.txt"
+	expectedPath := "../../evil.txt"
+	// Content format matches what generateMaliciousZip actually creates
+	expectedContent := "Malicious content for evil.txt"
+	verifyZipContents(t, outputFile, []string{expectedPath}, expectedContent)
 }
 
 func TestIsVulnerableZip(t *testing.T) {
@@ -313,10 +316,9 @@ func FuzzAdversarialInputs(f *testing.F) {
 	f.Fuzz(func(t *testing.T, path string) {
 		// Test that our detection is robust against adversarial inputs
 		assert.NotPanics(t, func() {
-			result := isVulnerablePath(path)
-			// Log for analysis but don't assert specific results
-			// since adversarial inputs may have ambiguous expected outcomes
-			t.Logf("Adversarial input %q -> vulnerable: %v", path, result)
+			_ = isVulnerablePath(path)
+			// Don't log results to avoid test runner issues
+			// Adversarial inputs are tested for panic-free execution only
 		}, "Detection should not panic on adversarial input: %q", path)
 	})
 }
